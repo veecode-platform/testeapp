@@ -1,0 +1,19 @@
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: testeapp
+  labels:
+    app: testeapp
+    vee.codes/cluster: local
+spec:
+  rules:
+    - host: testeapp.localhost
+      http:
+        paths:
+          - path: /
+            pathType: Prefix
+            backend:
+              service:
+                name: testeapp
+                port:
+                  number: 80

@@ -1,0 +1,66 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: testeapp
+  labels:
+    app: testeapp
+    vee.codes/cluster: local
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: testeapp
+  template:
+    metadata:
+      labels:
+        app: testeapp
+        vee.codes/cluster: local
+    spec:
+      imagePullSecrets:
+        - name: dockerhub-credentials
+      containers:
+        - name: testeapp
+          image: IMAGE_PLACEHOLDER
+          ports:
+            - containerPort: 3000
+          env:
+            - name: PORT
+              value: "3000"
+            - name: DB_HOST
+              valueFrom:
+                secretKeyRef:
+                  name: db-conn
+                  key: host
+            - name: DB_PORT
+              valueFrom:
+                secretKeyRef:
+                  name: db-conn
+                  key: port
+            - name: DB_NAME
+              value: testeapp
+            - name: DB_USER
+              value: testeapp-user
+            - name: DB_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: testeapp-db-credentials
+                  key: attribute.password
+          livenessProbe:
+            httpGet:
+              path: /health
+              port: 3000
+            initialDelaySeconds: 5
+            periodSeconds: 10
+          readinessProbe:
+            httpGet:
+              path: /health
+              port: 3000
+            initialDelaySeconds: 3
+            periodSeconds: 5
+          resources:
+            requests:
+              memory: "64Mi"
+              cpu: "50m"
+            limits:
+              memory: "128Mi"
+              cpu: "200m"

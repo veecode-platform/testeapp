@@ -1,0 +1,35 @@
+
+apiVersion: database.digitalocean.crossplane.io/v1alpha1
+kind: DB
+metadata:
+  name: testeapp-db
+  labels:
+    app: testeapp
+    vee.codes/cluster: local
+spec:
+  writeConnectionSecretToRef:
+    name: testeapp-db-conn
+    namespace: default
+  forProvider:
+    name: testeapp
+    clusterIdRef:
+      name: postgres-demo
+  providerConfigRef:
+    name: default
+---
+apiVersion: database.digitalocean.crossplane.io/v1alpha1
+kind: User
+metadata:
+  name: testeapp-user
+  labels:
+    app: testeapp
+    vee.codes/cluster: local
+spec:
+  writeConnectionSecretToRef:
+    name: testeapp-db-credentials
+    namespace: default
+  forProvider:
+    clusterIdRef:
+      name: postgres-demo
+  providerConfigRef:
+    name: default

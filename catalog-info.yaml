@@ -1,0 +1,11 @@
+apiVersion: backstage.io/v1alpha1
+kind: Component
+metadata:
+  name: testeapp
+  description: Teste App
+  annotations:
+    github.com/project-slug: veecode-platform/testeapp
+spec:
+  type: service
+  lifecycle: experimental
+  owner: group:default/admins

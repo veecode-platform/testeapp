@@ -1,0 +1,14 @@
+{
+  "name": "testeapp",
+  "version": "1.0.0",
+  "description": "Teste App",
+  "main": "src/index.js",
+  "scripts": {
+    "start": "node src/index.js",
+    "dev": "node --watch src/index.js"
+  },
+  "dependencies": {
+    "express": "^4.21.0",
+    "pg": "^8.13.0"
+  }
+}

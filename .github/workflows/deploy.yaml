@@ -1,0 +1,80 @@
+name: Build and Deploy
+
+on:
+  push:
+    branches:
+      - main
+
+env:
+  IMAGE: veecode/testeapp
+
+jobs:
+  build-and-deploy:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Log in to Docker Hub
+        uses: docker/login-action@v3
+        with:
+          username: ${{ secrets.DOCKER_USERNAME }}
+          password: ${{ secrets.DOCKER_PASSWORD }}
+
+      - name: Build and push Docker image
+        uses: docker/build-push-action@v6
+        with:
+          context: .
+          push: true
+          tags: |
+            ${{ env.IMAGE }}:${{ github.sha }}
+            ${{ env.IMAGE }}:latest
+
+      - name: Set up kubectl
+        uses: azure/setup-kubectl@v4
+
+      - name: Configure kubeconfig
+        run: |
+          mkdir -p $HOME/.kube
+          echo "${{ secrets.KUBECONFIG }}" | base64 -d > $HOME/.kube/config
+
+      - name: Create image pull secret
+        run: |
+          kubectl create secret docker-registry dockerhub-credentials \
+            --docker-server=https://index.docker.io/v1/ \
+            --docker-username=${{ secrets.DOCKER_USERNAME }} \
+            --docker-password=${{ secrets.DOCKER_PASSWORD }} \
+            --dry-run=client -o yaml | kubectl apply -f -
+
+      - name: Create database connection secret
+        run: |
+          kubectl create secret generic db-conn \
+            --from-literal=host=${{ secrets.DB_HOST }} \
+            --from-literal=port=${{ secrets.DB_PORT }} \
+            --dry-run=client -o yaml | kubectl apply -f -
+
+      - name: Apply database resources
+        run: kubectl apply -f k8s/database.yaml
+
+      - name: Wait for database user and grant permissions
+        run: |
+          sudo apt-get install -y -qq postgresql-client > /dev/null
+          for i in $(seq 1 30); do
+            if kubectl get secret testeapp-db-credentials >/dev/null 2>&1; then
+              echo "User credentials secret found, granting permissions..."
+              PGPASSWORD=${{ secrets.DOADMIN_PASSWORD }} psql \
+                "host=${{ secrets.DB_HOST }} port=${{ secrets.DB_PORT }} dbname=testeapp user=doadmin sslmode=require" \
+                -c "GRANT ALL ON SCHEMA public TO \"testeapp-user\"; GRANT ALL ON ALL TABLES IN SCHEMA public TO \"testeapp-user\"; ALTER DEFAULT PRIVILEGES IN SCHEMA public GRANT ALL ON TABLES TO \"testeapp-user\";" \
+                && exit 0
+            fi
+            echo "Attempt $i/30: waiting for user credentials secret..."
+            sleep 10
+          done
+          echo "Timed out waiting for database user"
+          exit 1
+
+      - name: Deploy application
+        run: |
+          sed -i "s|IMAGE_PLACEHOLDER|${{ env.IMAGE }}:${{ github.sha }}|g" k8s/deployment.yaml
+          kubectl apply -f k8s/deployment.yaml -f k8s/service.yaml -f k8s/ingress.yaml
