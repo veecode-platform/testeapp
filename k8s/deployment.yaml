@@ -5,6 +5,7 @@ metadata:
   labels:
     app: testeapp
     vee.codes/cluster: local
+    backstage.io/kubernetes-id: testeapp
 spec:
   replicas: 1
   selector:
@@ -15,6 +16,7 @@ spec:
       labels:
         app: testeapp
         vee.codes/cluster: local
+        backstage.io/kubernetes-id: testeapp
     spec:
       imagePullSecrets:
         - name: dockerhub-credentials

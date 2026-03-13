@@ -5,6 +5,7 @@ metadata:
   labels:
     app: testeapp
     vee.codes/cluster: local
+    backstage.io/kubernetes-id: testeapp
 spec:
   rules:
     - host: testeapp.localhost
