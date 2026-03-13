@@ -5,7 +5,7 @@ metadata:
   description: Teste App
   annotations:
     github.com/project-slug: veecode-platform/testeapp
-    backstage.io/kubernetes-id: testeapp
+    backstage.io/kubernetes-label-selector: "vee.codes/app=testeapp"
 spec:
   type: service
   lifecycle: experimental

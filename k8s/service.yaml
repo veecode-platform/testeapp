@@ -5,7 +5,7 @@ metadata:
   labels:
     app: testeapp
     vee.codes/cluster: local
-    backstage.io/kubernetes-id: testeapp
+    vee.codes/app: testeapp
 spec:
   type: ClusterIP
   ports:
